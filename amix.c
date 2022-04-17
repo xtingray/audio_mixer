@@ -1,35 +1,16 @@
-#include <stdio.h>
-
-#include "libavcodec/avcodec.h"
-
-#include "libavutil/channel_layout.h"
-#include "libavutil/md5.h"
-#include "libavutil/opt.h"
-#include "libavutil/samplefmt.h"
-
-#include "libavfilter/avfilter.h"
 #include "libavfilter/buffersink.h"
-#include "libavfilter/buffersrc.h"
-
 #include <libavformat/avformat.h>
-
-#include "libavformat/avio.h"
-
-#include "libavutil/audio_fifo.h"
-#include "libavutil/avassert.h"
-#include "libavutil/avstring.h"
-#include "libavutil/frame.h"
 #include "libavutil/opt.h"
 
 #define INPUT_SAMPLERATE     44100
 #define INPUT_FORMAT         AV_SAMPLE_FMT_S16
 #define INPUT_CHANNEL_LAYOUT AV_CH_LAYOUT_STEREO
 
-/** The output bit rate in kbit/s */
+// The output bit rate in kbit/s 
 #define OUTPUT_BIT_RATE 44100
-/** The number of output channels */
+// The number of output channels
 #define OUTPUT_CHANNELS 2
-/** The audio sample output format */
+// The audio sample output format
 #define OUTPUT_SAMPLE_FORMAT AV_SAMPLE_FMT_S16
 
 #define VOLUME_VAL 0.90
@@ -43,7 +24,7 @@ AVFormatContext *input_format_context_1 = NULL;
 AVCodecContext *input_codec_context_1 = NULL;
 
 AVFilterGraph *graph;
-AVFilterContext *src0,*src1, *sink;
+AVFilterContext *src0, *src1, *sink;
 
 static char *const get_error_text(const int error)
 {
