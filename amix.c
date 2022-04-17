@@ -67,7 +67,7 @@ static int init_filter_graph(AVFilterGraph **graph, AVFilterContext **src0, AVFi
     char args[512];
     int err;
     
-    /* Create a new filtergraph, which will contain all the filters. */
+    // Create a new filtergraph, which will contain all the filters.
     filter_graph = avfilter_graph_alloc();
     if (!filter_graph) {
         av_log(NULL, AV_LOG_ERROR, "Unable to create filter graph.\n");
@@ -76,15 +76,15 @@ static int init_filter_graph(AVFilterGraph **graph, AVFilterContext **src0, AVFi
     
     /****** abuffer 0 ********/
     
-    /* Create the abuffer filter;
-     * it will be used for feeding the data into the graph. */
+    // Create the abuffer filter;
+    // it will be used for feeding the data into the graph.
     abuffer0 = avfilter_get_by_name("abuffer");
     if (!abuffer0) {
         av_log(NULL, AV_LOG_ERROR, "Could not find the abuffer filter.\n");
         return AVERROR_FILTER_NOT_FOUND;
     }
     
-    /* buffer audio source: the decoded frames from the decoder will be inserted here. */
+    // buffer audio source: the decoded frames from the decoder will be inserted here.
     if (!input_codec_context_0->channel_layout)
         input_codec_context_0->channel_layout = av_get_default_channel_layout(input_codec_context_0->channels);
     snprintf(args, sizeof(args),
@@ -100,17 +100,17 @@ static int init_filter_graph(AVFilterGraph **graph, AVFilterContext **src0, AVFi
         return err;
     }
     
-    /****** abuffer 1 ******* */
+    // abuffer 1
     
-    /* Create the abuffer filter;
-     * it will be used for feeding the data into the graph. */
+    // Create the abuffer filter;
+    // it will be used for feeding the data into the graph.
     abuffer1 = avfilter_get_by_name("abuffer");
     if (!abuffer1) {
         av_log(NULL, AV_LOG_ERROR, "Could not find the abuffer filter.\n");
         return AVERROR_FILTER_NOT_FOUND;
     }
     
-    /* buffer audio source: the decoded frames from the decoder will be inserted here. */
+    // buffer audio source: the decoded frames from the decoder will be inserted here.
     if (!input_codec_context_1->channel_layout)
         input_codec_context_1->channel_layout = av_get_default_channel_layout(input_codec_context_1->channels);
 
@@ -124,8 +124,8 @@ static int init_filter_graph(AVFilterGraph **graph, AVFilterContext **src0, AVFi
         return err;
     }
     
-    /****** amix ******* */
-    /* Create mix filter. */
+    // amix
+    // Create mix filter.
     mix_filter = avfilter_get_by_name("amix");
     if (!mix_filter) {
         av_log(NULL, AV_LOG_ERROR, "Could not find the mix filter.\n");
@@ -141,8 +141,9 @@ static int init_filter_graph(AVFilterGraph **graph, AVFilterContext **src0, AVFi
         return err;
     }
     
-    /* Finally create the abuffersink filter;
-     * it will be used to get the filtered data out of the graph. */
+    // Finally create the abuffersink filter;
+    // it will be used to get the filtered data out of the graph.
+
     abuffersink = avfilter_get_by_name("abuffersink");
     if (!abuffersink) {
         av_log(NULL, AV_LOG_ERROR, "Could not find the abuffersink filter.\n");
@@ -155,7 +156,7 @@ static int init_filter_graph(AVFilterGraph **graph, AVFilterContext **src0, AVFi
         return AVERROR(ENOMEM);
     }
     
-    /* Same sample fmts as the output file. */
+    // Same sample fmts as the output file.
     err = av_opt_set_int_list(abuffersink_ctx, "sample_fmts",
                               ((int[]){ AV_SAMPLE_FMT_S16, AV_SAMPLE_FMT_NONE }),
                               AV_SAMPLE_FMT_NONE, AV_OPT_SEARCH_CHILDREN);
@@ -175,7 +176,7 @@ static int init_filter_graph(AVFilterGraph **graph, AVFilterContext **src0, AVFi
         return err;
     }
     
-    /* Connect the filters; */
+    // Connect the filters
     
     err = avfilter_link(abuffer0_ctx, 0, mix_ctx, 0);
     if (err >= 0)
@@ -187,7 +188,7 @@ static int init_filter_graph(AVFilterGraph **graph, AVFilterContext **src0, AVFi
         return err;
     }
     
-    /* Configure the graph. */
+    // Configure the graph.
     err = avfilter_graph_config(filter_graph, NULL);
     if (err < 0) {
         av_log(NULL, AV_LOG_ERROR, "Error while configuring graph : %s\n", get_error_text(err));
@@ -205,8 +206,7 @@ static int init_filter_graph(AVFilterGraph **graph, AVFilterContext **src0, AVFi
     return 0;
 }
 
-
-/** Open an input file and the required decoder. */
+// Open an input file and the required decoder.
 static int open_input_file(const char *filename,
                            AVFormatContext **input_format_context,
                            AVCodecContext **input_codec_context)
@@ -214,7 +214,7 @@ static int open_input_file(const char *filename,
     AVCodec *input_codec;
     int error;
     
-    /** Open the input file to read from it. */
+    // Open the input file to read from it.
     if ((error = avformat_open_input(input_format_context, filename, NULL, NULL)) < 0) {
         av_log(NULL, AV_LOG_ERROR, "Could not open input file '%s' (error '%s')\n",
                filename, get_error_text(error));
@@ -222,7 +222,7 @@ static int open_input_file(const char *filename,
         return error;
     }
     
-    /** Get information on the input file (number of streams etc.). */
+    // Get information on the input file (number of streams etc.).
     if ((error = avformat_find_stream_info(*input_format_context, NULL)) < 0) {
         av_log(NULL, AV_LOG_ERROR, "Could not open find stream info (error '%s')\n",
                get_error_text(error));
@@ -230,7 +230,7 @@ static int open_input_file(const char *filename,
         return error;
     }
     
-    /** Make sure that there is only one stream in the input file. */
+    // Make sure that there is only one stream in the input file.
     if ((*input_format_context)->nb_streams != 1) {
         av_log(NULL, AV_LOG_ERROR, "Expected one audio input stream, but found %d\n",
                (*input_format_context)->nb_streams);
@@ -238,21 +238,21 @@ static int open_input_file(const char *filename,
         return AVERROR_EXIT;
     }
     
-    /** Find a decoder for the audio stream. */
+    // Find a decoder for the audio stream.
     if (!(input_codec = avcodec_find_decoder((*input_format_context)->streams[0]->codec->codec_id))) {
         av_log(NULL, AV_LOG_ERROR, "Could not find input codec\n");
         avformat_close_input(input_format_context);
         return AVERROR_EXIT;
     }
     
-    /** Open the decoder for the audio stream to use it later. */
+    // Open the decoder for the audio stream to use it later.
     if ((error = avcodec_open2((*input_format_context)->streams[0]->codec, input_codec, NULL)) < 0) {
         av_log(NULL, AV_LOG_ERROR, "Could not open input codec (error '%s')\n", get_error_text(error));
         avformat_close_input(input_format_context);
         return error;
     }
     
-    /** Save the decoder context for easier access later. */
+    // Save the decoder context for easier access later.
     *input_codec_context = (*input_format_context)->streams[0]->codec;
     
     return 0;
@@ -273,7 +273,7 @@ static int open_output_file(const char *filename,
     AVCodec *output_codec          = NULL;
     int error;
     
-    /** Open the output file to write to it. */
+    // Open the output file to write to it.
     if ((error = avio_open(&output_io_context, filename,
                            AVIO_FLAG_WRITE)) < 0) {
         av_log(NULL, AV_LOG_ERROR, "Could not open output file '%s' (error '%s')\n",
@@ -281,43 +281,38 @@ static int open_output_file(const char *filename,
         return error;
     }
     
-    /** Create a new format context for the output container format. */
+    // Create a new format context for the output container format.
     if (!(*output_format_context = avformat_alloc_context())) {
         av_log(NULL, AV_LOG_ERROR, "Could not allocate output format context\n");
         return AVERROR(ENOMEM);
     }
     
-    /** Associate the output file (pointer) with the container format context. */
+    // Associate the output file (pointer) with the container format context.
     (*output_format_context)->pb = output_io_context;
     
-    /** Guess the desired container format based on the file extension. */
+    // Guess the desired container format based on the file extension.
     if (!((*output_format_context)->oformat = av_guess_format(NULL, filename, NULL))) {
         av_log(NULL, AV_LOG_ERROR, "Could not find output file format\n");
         goto cleanup;
     }
-    
-    av_strlcpy((*output_format_context)->filename, filename,
-               sizeof((*output_format_context)->filename));
-    
-    /** Find the encoder to be used by its name. */
+   
+    // Find the encoder to be used by its name.
     if (!(output_codec = avcodec_find_encoder(AV_CODEC_ID_PCM_S16LE))) {
         av_log(NULL, AV_LOG_ERROR, "Could not find an PCM encoder.\n");
         goto cleanup;
     }
     
-    /** Create a new audio stream in the output file container. */
+    // Create a new audio stream in the output file container.
     if (!(stream = avformat_new_stream(*output_format_context, output_codec))) {
         av_log(NULL, AV_LOG_ERROR, "Could not create new stream\n");
         error = AVERROR(ENOMEM);
         goto cleanup;
     }
     
-    /** Save the encoder context for easiert access later. */
+    // Save the encoder context for easiert access later.
     *output_codec_context = stream->codec;
     
-    /**
-     * Set the basic encoder parameters.
-     */
+    // Set the basic encoder parameters.
     (*output_codec_context)->channels       = OUTPUT_CHANNELS;
     (*output_codec_context)->channel_layout = av_get_default_channel_layout(OUTPUT_CHANNELS);
     (*output_codec_context)->sample_rate    = input_codec_context->sample_rate;
@@ -326,14 +321,13 @@ static int open_output_file(const char *filename,
     
     av_log(NULL, AV_LOG_INFO, "output bitrate %" PRIu64 "\n", (*output_codec_context)->bit_rate);
     
-    /**
-     * Some container formats (like MP4) require global headers to be present
-     * Mark the encoder so that it behaves accordingly.
-     */
+    // Some container formats (like MP4) require global headers to be present
+    // Mark the encoder so that it behaves accordingly.
+
     if ((*output_format_context)->oformat->flags & AVFMT_GLOBALHEADER)
         (*output_codec_context)->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
     
-    /** Open the encoder for the audio stream to use it later. */
+    // Open the encoder for the audio stream to use it later.
     if ((error = avcodec_open2(*output_codec_context, output_codec, NULL)) < 0) {
         av_log(NULL, AV_LOG_ERROR, "Could not open output codec (error '%s')\n",
                get_error_text(error));
@@ -350,7 +344,7 @@ static int open_output_file(const char *filename,
     return error < 0 ? error : AVERROR_EXIT;
 }
 
-/** Initialize one audio frame for reading from the input file */
+// Initialize one audio frame for reading from the input file
 static int init_input_frame(AVFrame **frame)
 {
     if (!(*frame = av_frame_alloc())) {
@@ -360,7 +354,7 @@ static int init_input_frame(AVFrame **frame)
     return 0;
 }
 
-/** Initialize one data packet for reading or writing. */
+// Initialize one data packet for reading or writing.
 static void init_packet(AVPacket *packet)
 {
     packet = av_packet_alloc();
@@ -369,7 +363,7 @@ static void init_packet(AVPacket *packet)
     packet->size = 0;
 }
 
-/** Decode one audio frame from the input file. */
+// Decode one audio frame from the input file.
 static int decode_audio_frame(AVFrame *frame,
                               AVFormatContext *input_format_context,
                               AVCodecContext *input_codec_context,
@@ -380,7 +374,7 @@ static int decode_audio_frame(AVFrame *frame,
     int error;
     init_packet(&input_packet);
     
-    /** Read one audio frame from the input file into a temporary packet. */
+    // Read one audio frame from the input file into a temporary packet.
     if ((error = av_read_frame(input_format_context, &input_packet)) < 0) {
         // If we are the the end of the file, flush the decoder below.
         if (error == AVERROR_EOF)
@@ -392,12 +386,10 @@ static int decode_audio_frame(AVFrame *frame,
         }
     }
     
-    /**
-     * Decode the audio frame stored in the temporary packet.
-     * The input audio stream decoder is used to do this.
-     * If we are at the end of the file, pass an empty packet to the decoder
-     * to flush it.
-     */
+    // Decode the audio frame stored in the temporary packet.
+    // The input audio stream decoder is used to do this.
+    // If we are at the end of the file, pass an empty packet to the decoder
+    // to flush it.
     if ((error = avcodec_decode_audio4(input_codec_context, frame,
                                        data_present, &input_packet)) < 0) {
         av_log(NULL, AV_LOG_ERROR, "Could not decode frame (error '%s')\n",
@@ -415,7 +407,7 @@ static int decode_audio_frame(AVFrame *frame,
     return 0;
 }
 
-/** Encode one frame worth of audio to the output file. */
+// Encode one frame worth of audio to the output file.
 static int encode_audio_frame(AVFrame *frame,
                               AVFormatContext *output_format_context,
                               AVCodecContext *output_codec_context,
@@ -546,9 +538,9 @@ static int process_all(){
             // pull filtered audio from the filtergraph
             while (1) {
                 ret = av_buffersink_get_frame(sink, filt_frame);
-                if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF){
-                    for(int i = 0 ; i < nb_inputs ; i++){
-                        if(av_buffersrc_get_nb_failed_requests(buffer_contexts[i]) > 0){
+                if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
+                    for (int i = 0 ; i < nb_inputs ; i++) {
+                        if (av_buffersrc_get_nb_failed_requests(buffer_contexts[i]) > 0) {
                             input_to_read[i] = 1;
                             av_log(NULL, AV_LOG_INFO, "Need to read input %d\n", i);
                         }
@@ -575,7 +567,7 @@ static int process_all(){
             av_frame_free(&filt_frame);
         } else {
             av_log(NULL, AV_LOG_INFO, "No data in graph\n");
-            for(int i = 0 ; i < nb_inputs ; i++){
+            for (int i=0; i<nb_inputs; i++) {
                 input_to_read[i] = 1;
             }
         }
