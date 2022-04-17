@@ -1,5 +1,8 @@
-#include "libavfilter/buffersink.h"
 #include <libavformat/avformat.h>
+
+#include "libavfilter/avfilter.h"
+#include "libavfilter/buffersink.h"
+#include "libavfilter/buffersrc.h"
 #include "libavutil/opt.h"
 
 #define INPUT_SAMPLERATE     44100
@@ -193,6 +196,9 @@ static int open_input_file(const char *filename,
                            AVCodecContext **input_codec_context)
 {
     AVCodec *input_codec;
+    AVStream *in_stream;
+    AVCodecParameters *in_codecpar;
+    enum AVCodecID audio_codec_id;
     int error;
     
     // Open the input file to read from it.
@@ -218,23 +224,45 @@ static int open_input_file(const char *filename,
         avformat_close_input(input_format_context);
         return AVERROR_EXIT;
     }
+
+    av_dump_format((*input_format_context), 0, filename, 0);
+
+    in_stream = (*input_format_context)->streams[0];
+    in_codecpar = in_stream->codecpar;
+    if (in_codecpar->codec_type != AVMEDIA_TYPE_AUDIO) {
+        av_log(NULL, AV_LOG_ERROR, "File input has no stream audio -> %s\n", filename);
+        return -1;
+    }
+
+    audio_codec_id = in_codecpar->codec_id;
     
     // Find a decoder for the audio stream.
-    if (!(input_codec = avcodec_find_decoder((*input_format_context)->streams[0]->codec->codec_id))) {
+    if (!(input_codec = avcodec_find_decoder(audio_codec_id))) {
         av_log(NULL, AV_LOG_ERROR, "Could not find input codec\n");
         avformat_close_input(input_format_context);
         return AVERROR_EXIT;
     }
+
+    // Creating codec context for the input file
+    *input_codec_context = avcodec_alloc_context3(input_codec);
+    if (!(*input_codec_context)) {
+        av_log(NULL, AV_LOG_ERROR, "Could not alloc memory for input codec context\n");
+        return -1;
+    }
+
+    error = avcodec_parameters_to_context((*input_codec_context), (*input_format_context)->streams[0]->codecpar);
+    if (error < 0) {
+        av_log(NULL, AV_LOG_ERROR, "Can't copy codecpar values to codec context (error '%s')\n",
+               get_error_text(error));
+        return error;
+    }
     
     // Open the decoder for the audio stream to use it later.
-    if ((error = avcodec_open2((*input_format_context)->streams[0]->codec, input_codec, NULL)) < 0) {
+    if ((error = avcodec_open2((*input_codec_context), input_codec, NULL)) < 0) {
         av_log(NULL, AV_LOG_ERROR, "Could not open input codec (error '%s')\n", get_error_text(error));
         avformat_close_input(input_format_context);
         return error;
     }
-    
-    // Save the decoder context for easier access later.
-    *input_codec_context = (*input_format_context)->streams[0]->codec;
     
     return 0;
 }
@@ -289,14 +317,26 @@ static int open_output_file(const char *filename,
         error = AVERROR(ENOMEM);
         goto cleanup;
     }
-    
+
     // Save the encoder context for easiert access later.
     *output_codec_context = stream->codec;
+
+    /*
+    *output_codec_context = avcodec_alloc_context3(output_codec);
+    if (*output_codec_context) {
+        return -1;
+    }
+    error = avcodec_parameters_to_context((*output_codec_context), stream->codecpar);
+    if (error < 0) {
+        return -1;
+    }
+    */
     
     // Set the basic encoder parameters.
     (*output_codec_context)->channels       = OUTPUT_CHANNELS;
     (*output_codec_context)->channel_layout = av_get_default_channel_layout(OUTPUT_CHANNELS);
-    (*output_codec_context)->sample_rate    = input_codec_context->sample_rate;
+    // (*output_codec_context)->sample_rate = input_codec_context->sample_rate;
+    (*output_codec_context)->sample_rate    = 44100;
     (*output_codec_context)->sample_fmt     = AV_SAMPLE_FMT_S16;
     //(*output_codec_context)->bit_rate     = input_codec_context->bit_rate;
     
@@ -621,13 +661,13 @@ int main(int argc, const char * argv[])
         av_log(NULL, AV_LOG_ERROR, "Error while opening file 1\n");
         exit(1);
     }
-    av_dump_format(input_format_context_0, 0, audio_input1, 0);
+    // av_dump_format(input_format_context_0, 0, audio_input1, 0);
     
     if (open_input_file(audio_input2, &input_format_context_1, &input_codec_context_1) < 0) {
         av_log(NULL, AV_LOG_ERROR, "Error while opening file 2\n");
         exit(1);
     }
-    av_dump_format(input_format_context_1, 0, audio_input2, 0);
+    // av_dump_format(input_format_context_1, 0, audio_input2, 0);
     
     // Set up the filtergraph.
     err = init_filter_graph(&graph, &src0, &src1, &sink);
