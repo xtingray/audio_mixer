@@ -1,6 +1,6 @@
 # audio_mixer
 # FFmpeg amix filter example
-This C example gets two wav audio files and merges them to generate a new wav file using ffmpeg-4.4 API.
+This C example gets two WAV audio files and merges them to generate a new WAV file using ffmpeg-4.4 API.
 
 ## Compilation command line
     export LD_LIBRARY_PATH=/usr/local/ffmpeg/lib
