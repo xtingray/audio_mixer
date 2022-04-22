@@ -665,7 +665,7 @@ static int write_output_file_trailer(AVFormatContext *output_format_context)
 int main(int argc, const char * argv[])
 {
     if (argc < 4) {
-        printf("usage: ./amix audio_input1.wav audio_input2.wav audio_output.wav\n");
+        printf("usage: ./audio_mixer audio_input1.wav audio_input2.wav audio_output.wav\n");
         return 1;
     }
 
@@ -710,7 +710,5 @@ int main(int argc, const char * argv[])
         exit(1);
     }
 
-    // Audio mix succeed!
-    
     return 0;
 }
