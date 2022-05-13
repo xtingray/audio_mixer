@@ -382,6 +382,8 @@ static int decode_audio_frame(AVFrame *frame,
                               AVCodecContext *input_codec_context,
                               int *data_present, int *finished)
 {
+    /*
+    // Devel version
     // Packet used for temporary storage.
     AVPacket *input_packet = av_packet_alloc();
     int error;
@@ -430,6 +432,49 @@ static int decode_audio_frame(AVFrame *frame,
     // so that this function has to be called again.
     if (*finished && *data_present)
         *finished = 0;
+    av_packet_unref(input_packet);
+
+    return 0;
+    */
+    
+    // Deprecated version
+    // Packet used for temporary storage. 
+    AVPacket *input_packet = av_packet_alloc();
+    int error;
+	
+    /// Read one audio frame from the input file into a temporary packet. 
+    if ((error = av_read_frame(input_format_context, input_packet)) < 0) {
+        // If we are the the end of the file, flush the decoder below. 
+        if (error == AVERROR_EOF)
+            *finished = 1;
+        else {
+            av_log(NULL, AV_LOG_ERROR, "Could not read frame (error '%s')\n",
+                   get_error_text(error));
+            return error;
+        }
+    }
+
+     // Decode the audio frame stored in the temporary packet.
+     // The input audio stream decoder is used to do this.
+     // If we are at the end of the file, pass an empty packet to the decoder
+     // to flush it.
+    
+    if ((error = avcodec_decode_audio4(input_codec_context, frame,
+                                       data_present, input_packet)) < 0) {
+        av_log(NULL, AV_LOG_ERROR, "Could not decode frame (error '%s')\n",
+               get_error_text(error));   
+        av_packet_unref(input_packet);
+
+        return error;
+    }
+	
+    
+     // If the decoder has not been flushed completely, we are not finished,
+     // so that this function has to be called again.
+     
+    if (*finished && *data_present)
+        *finished = 0;
+
     av_packet_unref(input_packet);
 
     return 0;
